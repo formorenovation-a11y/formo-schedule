@@ -1,1 +1,488 @@
+Aquí está el código completo para copiar y pegar:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formo Renovation — Schedule Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A96E;--gold-lt:#E8D090;--gold-mid:#B08840;--gold-dim:#7A6038;
+  --gold-dark:#3A2810;--gold-xd:#241A08;
+  --bg:#0D0C09;--bg2:#131108;--bg3:#1C190F;--bg4:#252018;--bg5:#2E2818;
+  --off:#F5F0E8;--bright:#FFFFFF;--mid:#D8CEBC;--dim:#8A8070;--dim2:#302A1E;
+  --dry:#0A0908;--green:#2A6A20;--green-lt:#5AB848;
+  --f:'Jost',system-ui,sans-serif;--fd:'Cormorant Garamond',Georgia,serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--off);font-family:var(--f);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--gold-dark),var(--gold-lt),var(--gold-dark));z-index:9999}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:3px}
+.screen{display:none;min-height:100vh;padding-top:3px}
+.screen.active{display:flex;flex-direction:column}
+#screen-output.active{display:block}
+#screen-input.active{flex-direction:row}
+.landing-left{
+  width:36%;min-height:100vh;background:var(--bg2);border-right:1px solid var(--dim2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 44px;position:relative;overflow:hidden;
+  animation:panelIn .8s cubic-bezier(.22,1,.36,1) both}
+.landing-left::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 120% 70% at 50% 110%,rgba(201,169,110,.14) 0%,transparent 65%);pointer-events:none}
+.landing-left::after{content:'';position:absolute;right:0;top:8%;bottom:8%;width:1px;
+  background:linear-gradient(to bottom,transparent,rgba(201,169,110,.35) 30%,rgba(201,169,110,.35) 70%,transparent)}
+.brand-block{display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.logo-ring{position:relative;width:168px;height:168px;display:flex;align-items:center;justify-content:center;margin-bottom:30px}
+.logo-ring::before{content:'';position:absolute;inset:0;border-radius:50%;
+  border:1px solid rgba(201,169,110,.2);animation:ringPulse 3.5s ease-in-out infinite}
+.logo-ring::after{content:'';position:absolute;inset:18px;border-radius:50%;border:1px solid rgba(201,169,110,.07)}
+.logo-ring img{width:114px;height:114px;object-fit:contain;position:relative;z-index:1;
+  filter:drop-shadow(0 8px 32px rgba(201,169,110,.45)) drop-shadow(0 2px 6px rgba(0,0,0,.7));
+  animation:logoFloat 4s ease-in-out infinite}
+.brand-name{font-family:var(--fd);font-size:56px;font-weight:700;color:var(--off);letter-spacing:10px;line-height:.9}
+.brand-renov{font-size:10px;color:var(--gold);letter-spacing:6px;text-transform:uppercase;
+  display:flex;align-items:center;gap:10px;margin:11px 0 9px}
+.brand-renov::before,.brand-renov::after{content:'';width:18px;height:1px;background:var(--gold-dim)}
+.brand-tag{font-size:8px;color:var(--dim);letter-spacing:2px;text-align:center;line-height:2.1}
+.divider{width:44px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);margin:26px auto}
+.brand-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.brand-pill{background:var(--bg3);border:1px solid var(--dim2);padding:5px 14px;font-size:7px;color:var(--gold-dim);letter-spacing:2px;text-transform:uppercase}
+.landing-right{flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding:52px 60px;animation:formIn .7s cubic-bezier(.22,1,.36,1) .12s both}
+.form-eyebrow{font-size:8px;color:var(--gold);letter-spacing:4px;text-transform:uppercase;font-weight:600;margin-bottom:10px}
+.form-heading{font-family:var(--fd);font-size:38px;font-weight:600;color:var(--off);line-height:1.1;margin-bottom:7px}
+.form-sub{font-size:10px;color:var(--dim);letter-spacing:.5px;margin-bottom:34px;line-height:1.7}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.fg.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:7.5px;color:var(--gold-mid);letter-spacing:2.5px;text-transform:uppercase;font-weight:600}
+.field input,.field textarea{
+  background:var(--bg3);border:1px solid var(--dim2);color:var(--off);
+  font-family:var(--f);font-size:12px;padding:12px 14px;outline:none;
+  transition:border-color .2s,box-shadow .2s;border-radius:0}
+.field input:focus,.field textarea:focus{border-color:var(--gold-dim);box-shadow:0 0 0 1px var(--gold-xd)}
+.field textarea{min-height:155px;resize:vertical;line-height:1.65}
+.field input[type="date"]{color-scheme:dark}
+.field input::placeholder,.field textarea::placeholder{color:var(--dim);opacity:.55}
+.fsep{height:1px;background:linear-gradient(to right,var(--dim2),transparent);margin:22px 0}
+.scope-tabs{display:flex;gap:0}
+.scope-tab{flex:1;padding:8px 12px;text-align:center;cursor:pointer;
+  font-size:8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  background:var(--bg3);border:1px solid var(--dim2);color:var(--dim);transition:all .2s}
+.scope-tab:first-child{border-right:none}
+.scope-tab.active{background:var(--gold-dark);border-color:var(--gold-dim);color:var(--gold-lt)}
+.scope-panel{display:none}
+.scope-panel.active{display:block}
+.drop-zone{
+  border:1.5px dashed var(--dim2);padding:32px 20px;text-align:center;
+  cursor:pointer;transition:all .25s;background:var(--bg3);position:relative;
+  min-height:155px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--gold-dim);background:var(--bg4)}
+.dz-icon{font-size:28px;opacity:.45}
+.dz-main{font-size:11px;color:var(--mid);font-weight:500}
+.dz-sub{font-size:8.5px;color:var(--dim)}
+.dz-types{display:flex;gap:6px;margin-top:4px}
+.dz-badge{background:var(--bg4);border:1px solid var(--dim2);padding:2px 8px;font-size:7px;color:var(--dim);letter-spacing:1px}
+.dz-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.file-loaded{background:var(--bg3);border:1px solid rgba(90,184,72,.4);padding:13px 16px;display:none;align-items:center;gap:12px;margin-top:8px}
+.file-loaded.show{display:flex}
+.fl-info{flex:1}
+.fl-name{font-size:11px;color:var(--green-lt);font-weight:500}
+.fl-size{font-size:8.5px;color:var(--dim);margin-top:2px}
+.fl-clear{background:transparent;border:1px solid var(--dim2);color:var(--dim);font-size:8px;padding:4px 10px;cursor:pointer;font-family:var(--f);transition:all .2s}
+.fl-clear:hover{border-color:#c04040;color:#e08070}
+.file-processing{display:none;align-items:center;gap:10px;margin-top:8px;font-size:9px;color:var(--gold);letter-spacing:1px}
+.file-processing.show{display:flex}
+.proc-spin{width:14px;height:14px;border:1.5px solid var(--gold-dark);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+.btn-gen{
+  width:100%;padding:16px 24px;margin-top:16px;background:var(--gold);color:#0a0908;border:none;
+  font-family:var(--f);font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;
+  cursor:pointer;position:relative;overflow:hidden;transition:background .2s,letter-spacing .2s}
+.btn-gen::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 60%);pointer-events:none}
+.btn-gen:hover{background:var(--gold-lt);letter-spacing:5px}
+.btn-gen:disabled{background:var(--gold-dim);cursor:not-allowed;letter-spacing:4px}
+.ferr{display:none;background:var(--bg3);border-left:3px solid #b03030;padding:10px 14px;font-size:10px;color:#e08070;line-height:1.6;margin-top:10px}
+#screen-loading{align-items:center;justify-content:center;gap:28px;background:var(--bg)}
+.load-img img{width:90px;object-fit:contain;filter:drop-shadow(0 0 28px rgba(201,169,110,.45));animation:logoFloat 2s ease-in-out infinite}
+.load-wm{font-family:var(--fd);font-size:34px;font-weight:600;color:var(--off);letter-spacing:8px;text-align:center}
+.load-sub{font-size:8px;color:var(--gold);letter-spacing:4px;text-transform:uppercase;animation:blink 1.6s ease-in-out infinite}
+.load-dots{display:flex;gap:8px}
+.load-dots span{width:7px;height:7px;border-radius:50%;background:var(--gold-dim);animation:dotB 1.4s ease-in-out infinite}
+.load-dots span:nth-child(2){animation-delay:.2s}
+.load-dots span:nth-child(3){animation-delay:.4s}
+#screen-output{background:var(--bg)}
+.out-nav{background:var(--bg2);border-bottom:1px solid var(--dim2);
+  padding:11px 32px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:3px;z-index:200;flex-wrap:wrap}
+.nav-proj{font-family:var(--fd);font-size:18px;color:var(--mid);letter-spacing:.5px;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-dl{background:var(--gold);color:#0a0908;border:none;
+  font-family:var(--f);font-size:9px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;padding:9px 24px;cursor:pointer;
+  transition:background .2s;display:flex;align-items:center;gap:8px}
+.btn-dl:hover{background:var(--gold-lt)}
+@keyframes panelIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+@keyframes formIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes ringPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.04)}}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes dotB{0%,80%,100%{transform:scale(0);opacity:.2}40%{transform:scale(1);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:860px){
+  #screen-input.active{flex-direction:column}
+  .landing-left{width:100%;min-height:auto;padding:36px 28px;flex-direction:row;gap:20px;justify-content:flex-start}
+  .landing-left::after{display:none}
+  .brand-block{flex-direction:row;align-items:center;gap:20px}
+  .logo-ring{width:80px;height:80px;margin-bottom:0}
+  .logo-ring img{width:64px;height:64px}
+  .brand-name{font-size:36px}
+  .brand-pills,.divider,.brand-tag{display:none}
+  .landing-right{padding:32px 24px}
+  .fg{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="screen-input" class="screen active">
+  <div class="landing-left">
+    <div class="brand-block">
+      <div class="logo-ring">
+        <img src="https://i.ibb.co/LXMxPRYx/Chat-GPT-Image-2-may-2026-12-02-45-a-m.png" alt="Formo Renovation" onerror="this.style.display='none'">
+      </div>
+      <div class="brand-name">FORMO</div>
+      <div class="brand-renov">Renovation</div>
+      <div class="brand-tag">Built on Quality<br>Driven by Integrity</div>
+      <div class="divider"></div>
+      <div class="brand-pills">
+        <span class="brand-pill">AI Powered</span>
+        <span class="brand-pill">No Sundays</span>
+        <span class="brand-pill">HTML Export</span>
+      </div>
+    </div>
+  </div>
+  <div class="landing-right">
+    <div class="form-eyebrow">Formo Renovation LLC</div>
+    <div class="form-heading">Project Schedule<br>Generator</div>
+    <div class="form-sub">Enter project details and scope of work to generate a professional schedule</div>
+    <div class="fg">
+      <div class="field"><label>Client Name</label><input type="text" id="in-client" placeholder="e.g. Mike Crockett"></div>
+      <div class="field"><label>Project Address</label><input type="text" id="in-address" placeholder="e.g. 2142 Maytown Cir, TN"></div>
+      <div class="field"><label>Start Date</label><input type="date" id="in-start"></div>
+      <div class="field"><label>Estimated Duration</label><input type="text" id="in-dur" placeholder="e.g. 2 weeks / 12 working days"></div>
+    </div>
+    <div class="fsep"></div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+        <label style="font-size:7.5px;color:var(--gold-mid);letter-spacing:2.5px;text-transform:uppercase;font-weight:600">Scope of Work</label>
+        <div class="scope-tabs">
+          <div class="scope-tab active" id="tab-type" onclick="switchTab('type')">✏ Type / Paste</div>
+          <div class="scope-tab" id="tab-file" onclick="switchTab('file')">📎 Upload File</div>
+        </div>
+      </div>
+      <div class="scope-panel active" id="panel-type">
+        <div class="field">
+          <textarea id="in-scope" placeholder="Paste or type the full scope of work here...&#10;&#10;Example:&#10;Phase 1 – Painting: Interior walls, ceilings, trim&#10;Phase 2 – Carpentry: Built-in shelving, ceiling beams&#10;Phase 3 – Drywall: Repair around bathtub, ceiling seams&#10;Phase 4 – Wallpaper: Powder room above wainscoting&#10;Phase 5 – Fixtures: Light fixtures, chandelier, mirrors"></textarea>
+        </div>
+      </div>
+      <div class="scope-panel" id="panel-file">
+        <div class="drop-zone" id="drop-zone" ondragover="dzDragOver(event)" ondragleave="dzDragLeave(event)" ondrop="dzDrop(event)">
+          <input type="file" class="dz-input" id="file-input" accept=".pdf,.doc,.docx,.txt,.rtf" onchange="handleFile(this.files[0])">
+          <div class="dz-icon">📄</div>
+          <div class="dz-main">Drop your file here or click to browse</div>
+          <div class="dz-sub">Scope of work will be extracted automatically</div>
+          <div class="dz-types"><span class="dz-badge">PDF</span><span class="dz-badge">DOCX</span><span class="dz-badge">TXT</span><span class="dz-badge">RTF</span></div>
+        </div>
+        <div class="file-processing" id="file-proc"><div class="proc-spin"></div>Reading file…</div>
+        <div class="file-loaded" id="file-loaded">
+          <div style="font-size:18px">✅</div>
+          <div class="fl-info"><div class="fl-name" id="fl-name"></div><div class="fl-size" id="fl-size"></div></div>
+          <button class="fl-clear" onclick="clearFile()">Remove</button>
+        </div>
+        <div id="extracted-preview" style="display:none;margin-top:8px">
+          <div style="font-size:7.5px;color:var(--gold-mid);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;font-weight:600">
+            Extracted Preview
+            <button onclick="togglePreview()" id="prev-btn" style="background:transparent;border:1px solid var(--dim2);color:var(--dim);font-size:7px;padding:2px 8px;cursor:pointer;font-family:var(--f);margin-left:8px;letter-spacing:1px">HIDE</button>
+          </div>
+          <textarea id="extracted-text" readonly style="width:100%;min-height:80px;background:var(--bg4);border:1px solid var(--dim2);color:var(--dim);font-family:monospace;font-size:9px;padding:10px;resize:vertical;line-height:1.6;outline:none"></textarea>
+        </div>
+      </div>
+    </div>
+    <div id="ferr" class="ferr"></div>
+    <button class="btn-gen" id="btn-gen" onclick="go()">Generate Project Schedule</button>
+  </div>
+</div>
+
+<div id="screen-loading" class="screen">
+  <div class="load-img"><img src="https://i.ibb.co/LXMxPRYx/Chat-GPT-Image-2-may-2026-12-02-45-a-m.png" alt=""></div>
+  <div class="load-wm">FORMO</div>
+  <div class="load-sub">Building your schedule…</div>
+  <div class="load-dots"><span></span><span></span><span></span></div>
+</div>
+
+<div id="screen-output" class="screen">
+  <div class="out-nav">
+    <div class="nav-proj" id="nav-title"></div>
+    <button class="btn-dl" onclick="downloadHTML()">⬇ Download HTML</button>
+  </div>
+  <div id="sched-out"></div>
+</div>
+
+<script>
+const LOGO='https://i.ibb.co/LXMxPRYx/Chat-GPT-Image-2-may-2026-12-02-45-a-m.png';
+const COLORS=['#C9A96E','#C48818','#D4A840','#3A9228','#B8609A','#5888C8','#4A9A30','#C06838','#6878D8','#D0A040'];
+const DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let extractedScope='', currentTab='type', lastScheduleHTML='', lastFilename='schedule.html';
+
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('in-start').value=new Date().toISOString().split('T')[0];
+});
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function showErr(m){const e=document.getElementById('ferr');e.textContent=m;e.style.display='block'}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function switchTab(t){currentTab=t;document.querySelectorAll('.scope-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.scope-panel').forEach(x=>x.classList.remove('active'));document.getElementById('tab-'+t).classList.add('active');document.getElementById('panel-'+t).classList.add('active')}
+function dzDragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag-over')}
+function dzDragLeave(){document.getElementById('drop-zone').classList.remove('drag-over')}
+function dzDrop(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)handleFile(f)}
+async function handleFile(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['pdf','doc','docx','txt','rtf'].includes(ext)){showErr(`File type .${ext} not supported.`);return;}
+  document.getElementById('file-proc').classList.add('show');
+  document.getElementById('file-loaded').classList.remove('show');
+  document.getElementById('extracted-preview').style.display='none';
+  try{
+    let text='';
+    if(ext==='pdf')text=await readPDF(file);
+    else if(ext==='docx'||ext==='doc')text=await readDOCX(file);
+    else text=await readText(file);
+    text=text.trim().replace(/\n{3,}/g,'\n\n');
+    if(text.length<30)throw new Error('Could not extract readable text. Try copy-pasting instead.');
+    extractedScope=text;
+    document.getElementById('fl-name').textContent=file.name;
+    document.getElementById('fl-size').textContent=`${text.length.toLocaleString()} characters extracted`;
+    document.getElementById('extracted-text').value=text;
+    document.getElementById('file-loaded').classList.add('show');
+    document.getElementById('extracted-preview').style.display='block';
+  }catch(err){showErr('File error: '+err.message);}
+  finally{document.getElementById('file-proc').classList.remove('show');}
+}
+async function readPDF(file){const ab=await file.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:ab}).promise;let t='';for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);const c=await p.getTextContent();t+=c.items.map(s=>s.str).join(' ')+'\n';}return t;}
+async function readDOCX(file){const ab=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:ab});return r.value;}
+function readText(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=()=>rej(new Error('Could not read file'));r.readAsText(file);})}
+function clearFile(){extractedScope='';document.getElementById('file-loaded').classList.remove('show');document.getElementById('extracted-preview').style.display='none';document.getElementById('file-input').value='';}
+function togglePreview(){const ta=document.getElementById('extracted-text');const btn=document.getElementById('prev-btn');ta.style.display=ta.style.display==='none'?'block':'none';btn.textContent=ta.style.display==='none'?'SHOW':'HIDE';}
+
+async function go(){
+  const client=document.getElementById('in-client').value.trim();
+  const address=document.getElementById('in-address').value.trim();
+  const start=document.getElementById('in-start').value;
+  const dur=document.getElementById('in-dur').value.trim();
+  const scope=currentTab==='type'?document.getElementById('in-scope').value.trim():extractedScope;
+  document.getElementById('ferr').style.display='none';
+  if(!scope)return showErr(currentTab==='file'?'Please upload a file.':'Please enter the scope of work.');
+  if(!start)return showErr('Please select a start date.');
+  document.getElementById('btn-gen').disabled=true;
+  show('screen-loading');
+  try{
+    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope,clientName:client,address,startDate:start,duration:dur})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Server error');
+    const title=client?`${client}${address?' — '+address:''}`:address||'Project Schedule';
+    document.getElementById('nav-title').textContent=title;
+    const inner=buildScheduleHTML(data,client,address,start);
+    document.getElementById('sched-out').innerHTML=inner;
+    lastScheduleHTML=buildStandaloneHTML(data,client,address,start);
+    lastFilename=`Schedule ${(address||client||'Project').replace(/[^a-z0-9 ,.-]/gi,' ').replace(/\s+/g,' ').trim()} ${start}.html`;
+    show('screen-output');window.scrollTo(0,0);
+  }catch(e){show('screen-input');showErr(e.message);}
+  finally{document.getElementById('btn-gen').disabled=false;}
+}
+
+function downloadHTML(){
+  const blob=new Blob([lastScheduleHTML],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=lastFilename;a.click();URL.revokeObjectURL(a.href);
+}
+
+function nw(d){const r=new Date(d);while(r.getDay()===0)r.setDate(r.getDate()+1);return r}
+function aw(d,n){const r=new Date(d);let a=0;while(a<n){r.setDate(r.getDate()+1);if(r.getDay()!==0)a++}return r}
+function buildCal(start,n){
+  const cal={};let cur=nw(new Date(start));
+  for(let d=1;d<=n;d++){cal[d]={name:DNAMES[cur.getDay()].toUpperCase(),date:`${MNAMES[cur.getMonth()]} ${cur.getDate()}`};cur.setDate(cur.getDate()+1);while(cur.getDay()===0)cur.setDate(cur.getDate()+1);}
+  return cal;
+}
+function dr(start,n){const s=nw(new Date(start)),e=aw(s,n-1);return `${DNAMES[s.getDay()]} ${s.getDate()} ${MNAMES[s.getMonth()]} — ${DNAMES[e.getDay()]} ${e.getDate()} ${MNAMES[e.getMonth()]} ${e.getFullYear()}`;}
+
+const SCHED_CSS=`
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0D0C09;color:#F5F0E8;font-family:'Jost',system-ui,sans-serif;padding-top:3px;min-width:900px}
+body::before{content:'';display:block;height:3px;background:linear-gradient(90deg,#3A2810,#E8D090,#3A2810);position:fixed;top:0;left:0;right:0;z-index:99}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#131108}::-webkit-scrollbar-thumb{background:#7A6038;border-radius:3px}
+.s-hdr{background:#131108;border-bottom:2px solid #C9A96E;padding:28px 40px 24px}
+.s-hdr-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.s-logo-wrap{display:flex;align-items:center;gap:0}
+.s-logo{width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 4px 18px rgba(201,169,110,.45))}
+.s-meta{text-align:right}
+.s-meta-title{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:600;color:#F5E8A0;letter-spacing:.5px;margin-bottom:5px}
+.s-meta-info{font-size:8px;color:#A09880;line-height:2;letter-spacing:.5px}
+.s-hdr-rule{height:1px;background:linear-gradient(to right,#7A6038,rgba(122,96,56,.1));margin:0 0 16px}
+.s-proj-grid{display:flex;gap:0;flex-wrap:wrap}
+.s-proj-item{padding:0 36px 0 0;border-right:1px solid #302A1E;margin-right:0}
+.s-proj-item:first-child{padding-left:0}
+.s-proj-item:last-child{border-right:none}
+.s-proj-item+.s-proj-item{padding-left:32px}
+.s-proj-lbl{font-size:7px;color:#D4A850;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+.s-proj-val{font-size:12px;color:#EDE4D4;font-weight:500;letter-spacing:.2px}
+.g-wrap{padding:20px 40px 0;overflow-x:auto}
+.g-col-hdr{display:grid;border-bottom:2px solid #C9A96E;background:#1C190F}
+.g-ch-task{padding:8px 0 8px 16px;font-size:7.5px;font-weight:700;color:#F5E8A0;letter-spacing:2.5px;text-transform:uppercase;display:flex;align-items:center;border-right:1px solid #302A1E}
+.g-ch-day{text-align:center;padding:5px 0;border-left:1px solid #252018}
+.g-ch-day-n{font-size:8px;font-weight:700;color:#F5E8A0;display:block;line-height:1.4}
+.g-ch-day-d{font-size:6.5px;color:#B0A888;display:block;line-height:1.3}
+.g-phase{margin-bottom:2px;margin-top:6px}
+.g-phase-hdr{display:grid;height:26px;border-left:4px solid var(--pc);background:linear-gradient(to right,rgba(255,255,255,.05) 0%,rgba(255,255,255,.01) 100%)}
+.g-ph-inner{display:flex;align-items:center;gap:10px;padding:0 16px;overflow:hidden;border-right:1px solid #302A1E}
+.g-ph-badge{background:var(--pc);color:#0a0908;font-size:7px;font-weight:800;letter-spacing:1px;padding:3px 10px;white-space:nowrap;flex-shrink:0;text-transform:uppercase}
+.g-ph-label{font-size:10px;font-weight:700;color:#FFFFFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.3px}
+.g-ph-emp{border-left:1px solid #252018;background:rgba(0,0,0,.08)}
+.g-task{display:grid;border-bottom:.5px solid #252018;transition:background .12s}
+.g-task:hover .g-tname span{color:#F5F0E8}
+.g-tname{display:flex;align-items:center;padding:0 10px 0 16px;border-left:3px solid var(--ta,#252018);border-right:1px solid #302A1E;overflow:hidden}
+.g-tname span{font-size:10.5px;color:#E8E0D0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1;transition:color .12s}
+.g-tname span.tc{color:#F5F0E8;font-weight:600}
+.g-tname span.td{color:#908870;font-style:italic;font-size:9.5px}
+.g-dcell{border-left:1px solid #252018;position:relative}
+.g-bar{position:absolute;top:3px;bottom:3px;left:3px;border-radius:2px;transform-origin:left center;animation:barSlide .55s cubic-bezier(.22,1,.36,1) both;}
+.g-bar.bw{box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.2)}
+.g-bar.bd{background:repeating-linear-gradient(45deg,#0A0908 0,#0A0908 3px,#161310 3px,#161310 8px);border:.5px solid #2A2418;box-shadow:none;top:2px;bottom:2px}
+.g-cdot{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 6px rgba(255,255,255,.6)}
+.legend-row{display:flex;gap:24px;flex-wrap:wrap;padding:14px 0;border-top:.5px solid #302A1E;margin:4px 40px 0}
+.leg{display:flex;align-items:center;gap:8px;font-size:8.5px;color:#B0A888;letter-spacing:.5px}
+.leg-sw{width:16px;height:11px;border-radius:2px;flex-shrink:0}
+.s-sum{padding:28px 40px;border-top:1.5px solid #C9A96E;margin-top:12px}
+.s-sum-ttl{font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:600;color:#F5E8A0;letter-spacing:1px;margin-bottom:18px}
+.s-met-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:24px}
+.s-met-card{background:#1C190F;padding:16px 18px;border-left:3px solid var(--mc,#C9A96E);border-bottom:1px solid #252018}
+.s-met-l{font-size:7px;color:#B0A070;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:5px;font-weight:600}
+.s-met-v{font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;font-weight:600;color:#F5E8A0}
+.s-disc{margin:0 40px 28px;background:#131108;border:1px solid #302A1E;border-left:4px solid #7A6038;padding:20px 24px;font-size:9px;color:#A09880;line-height:2}
+.s-disc strong{display:block;font-size:9px;color:#D4A850;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;font-weight:700}
+.s-disc p{margin-bottom:10px}
+.s-disc p:last-child{margin-bottom:0}
+.s-foot{background:#131108;border-top:1px solid #252018;padding:12px 40px;text-align:center;font-size:8px;color:#908870;letter-spacing:1.5px;margin-top:8px}
+.s-notes{font-size:9.5px;color:#B0A888;padding:12px 0;line-height:2;border-top:.5px solid #302A1E;margin-top:12px}
+.s-notes-lbl{font-size:8px;color:#D4A850;letter-spacing:2px;text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px}
+@keyframes barSlide{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+`;
+
+function buildScheduleHTML(data,client,address,start){
+  const N=Math.max(data.totalDays||10,1);
+  const cal=buildCal(start,N);
+  const dateRng=dr(start,N);
+  const TW=218,DW=46;
+  const colTpl=`${TW}px repeat(${N},${DW}px)`;
+  const totalW=TW+N*DW;
+  const now=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const startFmt=new Date(start).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  let taskIdx=0,phHtml='';
+  data.phases.forEach((ph,pi)=>{
+    const col=COLORS[pi%COLORS.length];
+    const emps=Array.from({length:N},()=>`<div class="g-ph-emp"></div>`).join('');
+    phHtml+=`<div class="g-phase"><div class="g-phase-hdr" style="grid-template-columns:${colTpl};--pc:${col}"><div class="g-ph-inner"><span class="g-ph-badge">${esc(ph.code)}</span><span class="g-ph-label">${esc(ph.label)}</span></div>${emps}</div>`;
+    ph.tasks.forEach(task=>{
+      const dry=task.type==='dry',crit=task.critical&&!dry;
+      const rh=dry?13:18,rbg=dry?'#0A0908':'#131108';
+      const tacc=dry?'transparent':crit?col:'#302A1E';
+      const tcls=dry?'td':crit?'tc':'';
+      const d0=Math.min(...task.days),d1=Math.max(...task.days);
+      const nm=(task.name||'').length>60?task.name.slice(0,59)+'…':task.name;
+      const delay=(taskIdx*0.04).toFixed(2)+'s';
+      taskIdx++;
+      let cells='';
+      for(let i=1;i<=N;i++){
+        if(i===d0){const sw=(d1-d0+1)*DW-6;cells+=`<div class="g-dcell" style="height:${rh}px;overflow:visible;z-index:2"><div class="g-bar ${dry?'bd':'bw'}" style="${dry?'':'background:'+col};width:${sw}px;animation-delay:${delay}">${crit?'<div class="g-cdot"></div>':''}</div></div>`;}
+        else{cells+=`<div class="g-dcell" style="height:${rh}px"></div>`;}
+      }
+      phHtml+=`<div class="g-task" style="grid-template-columns:${colTpl};height:${rh}px;background:${rbg};--ta:${tacc}"><div class="g-tname" title="${esc(task.name)}"><span class="${tcls}">${esc(nm)}</span></div>${cells}</div>`;
+    });
+    phHtml+=`</div>`;
+  });
+  const totalTasks=data.phases.reduce((a,p)=>a+p.tasks.filter(t=>t.type!=='dry').length,0);
+  const metHtml=[['Total Duration',`${N} Working Days`,'#C9A96E'],['Total Phases',`${data.phases.length}`,'#D4A840'],['Work Processes',`${totalTasks}`,'#3A9228'],['Project Start',startFmt,'#C9A96E']].map(([l,v,c])=>`<div class="s-met-card" style="--mc:${c}"><div class="s-met-l">${l}</div><div class="s-met-v">${v}</div></div>`).join('');
+  const projItems=[];
+  if(client)projItems.push(['Client',client]);
+  if(address)projItems.push(['Address',address]);
+  projItems.push(['Schedule',dateRng]);
+  projItems.push(['Rest Days','No work on Sundays or Holidays']);
+  const projHtml=projItems.map(([l,v])=>`<div class="s-proj-item"><div class="s-proj-lbl">${l}</div><div class="s-proj-val">${esc(v)}</div></div>`).join('');
+  const notesHtml=data.notes?`<div class="s-notes"><span class="s-notes-lbl">Schedule Notes</span>${esc(data.notes)}</div>`:'';
+  return `
+  <style>${SCHED_CSS}</style>
+  <div class="s-hdr">
+    <div class="s-hdr-top">
+      <div class="s-logo-wrap"><img src="${LOGO}" alt="Formo Renovation" class="s-logo" onerror="this.style.display='none'"></div>
+      <div class="s-meta">
+        <div class="s-meta-title">Project Work Schedule</div>
+        <div class="s-meta-info">Generated ${now}<br>FORMO RENOVATION LLC &nbsp;·&nbsp; 615-608-1220 &nbsp;·&nbsp; dan@formorenovation.com</div>
+      </div>
+    </div>
+    <div class="s-hdr-rule"></div>
+    <div class="s-proj-grid">${projHtml}</div>
+  </div>
+  <div class="g-wrap"><div style="min-width:${totalW}px">
+    <div class="g-col-hdr" style="grid-template-columns:${colTpl}">
+      <div class="g-ch-task">Task &nbsp;/&nbsp; Process</div>
+      ${Object.entries(cal).map(([d,v])=>`<div class="g-ch-day"><span class="g-ch-day-n">${v.name}</span><span class="g-ch-day-d">${v.date}</span></div>`).join('')}
+    </div>
+    ${phHtml}
+  </div></div>
+  <div class="legend-row">
+    <div class="leg"><div class="leg-sw" style="background:#C9A96E;box-shadow:inset 0 -2px 0 rgba(0,0,0,.3)"></div>Active Work</div>
+    <div class="leg"><div class="leg-sw" style="background:repeating-linear-gradient(45deg,#0A0908 0,#0A0908 3px,#161310 3px,#161310 7px);border:.5px solid #3A3020"></div>Drying / Curing — do not disturb</div>
+    <div class="leg"><div class="leg-sw" style="background:#C9A96E;position:relative;border-radius:2px"><div style="position:absolute;top:50%;left:8px;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 4px rgba(255,255,255,.5)"></div></div>Critical / Blocking Task</div>
+  </div>
+  <div class="s-sum">
+    <div class="s-sum-ttl">Project Summary</div>
+    <div class="s-met-grid">${metHtml}</div>${notesHtml}
+  </div>
+  <div class="s-disc">
+    <strong>Important Disclaimers &amp; Conditions</strong>
+    <p>This schedule is a planning estimate prepared by Formo Renovation LLC based on the approved scope of work and current project conditions. Actual timelines may vary due to material lead times, weather conditions, unforeseen structural or concealed conditions, client-requested changes, permit requirements, or third-party inspections.</p>
+    <p>Any modifications to the scope of work require a written Change Order and may affect the project timeline. Drying and curing periods are minimum estimates under normal conditions; humidity, temperature, and ventilation may extend these periods.</p>
+    <p>Work is performed Monday through Saturday. Sundays and recognized holidays are not working days unless otherwise agreed in writing. This document is for planning purposes only and does not constitute a contractual guarantee of completion dates.</p>
+    <p style="color:#7A6038">Formo Renovation LLC &nbsp;·&nbsp; Insured &amp; W9 Ready &nbsp;·&nbsp; dan@formorenovation.com &nbsp;·&nbsp; 615-608-1220</p>
+  </div>
+  <div class="s-foot">FORMO RENOVATION LLC &nbsp;·&nbsp; INSURED &amp; W9 READY &nbsp;·&nbsp; DAN@FORMORENOVATION.COM &nbsp;·&nbsp; 615-608-1220 &nbsp;·&nbsp; GENERATED ${now.toUpperCase()}</div>`;
+}
+
+function buildStandaloneHTML(data,client,address,start){
+  const inner=buildScheduleHTML(data,client,address,start);
+  const title=client?`Schedule — ${client}`:address?`Schedule — ${address}`:'Formo Renovation — Project Schedule';
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${esc(title)}</title>
+</head>
+<body style="margin:0;padding:0">
+${inner}
+</body>
+</html>`;
+}
+</script>
+</body>
+</html>
 
