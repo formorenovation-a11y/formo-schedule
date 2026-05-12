@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formo Renovation — Schedule Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A96E;--gold-lt:#E2C98A;--gold-mid:#A07840;
+  --gold-dim:#6A5030;--gold-dark:#3A2810;--gold-xd:#241A08;
+  --bg:#0D0C09;--bg2:#141210;--bg3:#1C1A14;--bg4:#242018;--bg5:#2C2820;
+  --off:#F4EFE6;--bright:#FFFFFF;--mid:#CEC4B0;--dim:#7A7060;--dim2:#2A2620;
+  --dry:#0A0908;
+  --f:'Jost',system-ui,sans-serif;
+  --fd:'Cormorant Garamond',Georgia,serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--off);font-family:var(--f);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--gold-dark),var(--gold-lt),var(--gold-dark));z-index:9999}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--gold-dim)}
+
+.screen{display:none;min-height:100vh;padding-top:3px}
+.screen.active{display:flex;flex-direction:column}
+#screen-output.active{display:block}
+
+/* ── LANDING ─────────────────────────────── */
+#screen-input.active{flex-direction:row}
+
+.landing-left{
+  width:36%;min-height:100vh;background:var(--bg2);
+  border-right:1px solid var(--dim2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 44px;position:relative;overflow:hidden;
+  animation:panelIn .8s cubic-bezier(.22,1,.36,1) both
+}
+.landing-left::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 120% 70% at 50% 110%,rgba(201,169,110,.13) 0%,transparent 65%);
+  pointer-events:none
+}
+.landing-left::after{
+  content:'';position:absolute;right:0;top:8%;bottom:8%;
+  width:1px;background:linear-gradient(to bottom,transparent,rgba(201,169,110,.3) 30%,rgba(201,169,110,.3) 70%,transparent)
+}
+
+.brand-block{display:flex;flex-direction:column;align-items:center;gap:0;position:relative;z-index:1}
+
+.logo-ring{
+  position:relative;width:160px;height:160px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:28px
+}
+.logo-ring::before{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  border:1px solid rgba(201,169,110,.18);
+  animation:ringPulse 3.5s ease-in-out infinite
+}
+.logo-ring::after{
+  content:'';position:absolute;inset:16px;border-radius:50%;
+  border:1px solid rgba(201,169,110,.08)
+}
+.logo-ring img{
+  width:110px;height:110px;object-fit:contain;position:relative;z-index:1;
+  filter:drop-shadow(0 6px 28px rgba(201,169,110,.4)) drop-shadow(0 2px 6px rgba(0,0,0,.7));
+  animation:logoFloat 4s ease-in-out infinite
+}
+
+.brand-name{
+  font-family:var(--fd);font-size:54px;font-weight:700;
+  color:var(--off);letter-spacing:10px;text-transform:uppercase;line-height:.9
+}
+.brand-renov{
+  font-size:10px;color:var(--gold);letter-spacing:6px;text-transform:uppercase;
+  display:flex;align-items:center;gap:10px;margin:10px 0 8px
+}
+.brand-renov::before,.brand-renov::after{content:'';width:18px;height:1px;background:var(--gold-dim)}
+.brand-tag{font-size:8px;color:var(--dim);letter-spacing:2px;text-align:center;line-height:2}
+
+.divider{width:40px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);margin:24px auto}
+
+.brand-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.brand-pill{
+  background:var(--bg3);border:1px solid var(--dim2);
+  padding:5px 14px;font-size:7px;color:var(--gold-dim);letter-spacing:2px;text-transform:uppercase
+}
+
+/* ── FORM PANEL ───────────────────────────── */
+.landing-right{
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding:60px 56px;
+  animation:formIn .7s cubic-bezier(.22,1,.36,1) .12s both
+}
+
+.form-eyebrow{font-size:8px;color:var(--gold);letter-spacing:4px;text-transform:uppercase;font-weight:600;margin-bottom:10px}
+.form-heading{font-family:var(--fd);font-size:36px;font-weight:600;color:var(--off);line-height:1.1;margin-bottom:6px}
+.form-sub{font-size:10px;color:var(--dim);letter-spacing:.5px;margin-bottom:36px}
+
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.fg.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:7.5px;color:var(--gold-mid);letter-spacing:2.5px;text-transform:uppercase;font-weight:600}
+.field input,.field textarea{
+  background:var(--bg3);border:1px solid var(--dim2);color:var(--off);
+  font-family:var(--f);font-size:12px;padding:11px 13px;outline:none;
+  transition:border-color .2s,box-shadow .2s
+}
+.field input:focus,.field textarea:focus{border-color:var(--gold-dim);box-shadow:0 0 0 1px var(--gold-xd)}
+.field textarea{min-height:200px;resize:vertical;line-height:1.65}
+.field input[type="date"]{color-scheme:dark}
+.field input::placeholder,.field textarea::placeholder{color:var(--dim);opacity:.6}
+
+.fsep{height:1px;background:linear-gradient(to right,var(--dim2),transparent);margin:24px 0}
+
+.btn-gen{
+  width:100%;padding:15px 24px;margin-top:6px;
+  background:var(--gold);color:#0a0908;border:none;
+  font-family:var(--f);font-size:11px;font-weight:700;
+  letter-spacing:4px;text-transform:uppercase;cursor:pointer;
+  position:relative;overflow:hidden;transition:background .2s,letter-spacing .2s
+}
+.btn-gen::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 60%);pointer-events:none}
+.btn-gen:hover{background:var(--gold-lt);letter-spacing:5px}
+.btn-gen:disabled{background:var(--gold-dim);cursor:not-allowed;letter-spacing:4px}
+
+.ferr{display:none;background:var(--bg3);border-left:3px solid #c04040;
+  padding:10px 14px;font-size:10px;color:#d07070;line-height:1.6;margin-top:10px}
+
+/* ── LOADING ──────────────────────────────── */
+#screen-loading{align-items:center;justify-content:center;gap:28px;background:var(--bg)}
+.load-img img{width:90px;object-fit:contain;
+  filter:drop-shadow(0 0 24px rgba(201,169,110,.4));
+  animation:logoFloat 2s ease-in-out infinite}
+.load-wm{font-family:var(--fd);font-size:32px;font-weight:600;color:var(--off);letter-spacing:7px;text-align:center}
+.load-sub{font-size:8px;color:var(--gold);letter-spacing:4px;text-transform:uppercase;
+  animation:blink 1.6s ease-in-out infinite}
+.load-dots{display:flex;gap:8px}
+.load-dots span{width:7px;height:7px;border-radius:50%;background:var(--gold-dim);
+  animation:dotB 1.4s ease-in-out infinite}
+.load-dots span:nth-child(2){animation-delay:.2s}
+.load-dots span:nth-child(3){animation-delay:.4s}
+
+/* ── OUTPUT ───────────────────────────────── */
+#screen-output{background:var(--bg)}
+.out-nav{
+  background:var(--bg2);border-bottom:1px solid var(--dim2);
+  padding:10px 28px;display:flex;align-items:center;gap:14px;
+  position:sticky;top:3px;z-index:200;flex-wrap:wrap
+}
+.btn-back{background:transparent;border:1px solid var(--gold-dim);color:var(--gold);
+  font-family:var(--f);font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  padding:7px 16px;cursor:pointer;transition:background .2s}
+.btn-back:hover{background:var(--gold-dark)}
+.nav-proj{font-family:var(--fd);font-size:17px;color:var(--mid);letter-spacing:.5px;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-pdf{background:var(--gold);color:#0a0908;border:none;
+  font-family:var(--f);font-size:8.5px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;padding:8px 22px;cursor:pointer;transition:background .2s}
+.btn-pdf:hover{background:var(--gold-lt)}
+
+/* SCHEDULE DOC */
+.sched-doc{padding:0 0 60px}
+.sched-hdr{background:var(--bg2);border-bottom:2px solid var(--gold);padding:22px 32px 18px}
+.sched-hdr-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+.sched-brand{display:flex;align-items:center;gap:18px}
+.sched-logo{width:62px;height:62px;object-fit:contain;filter:drop-shadow(0 4px 14px rgba(201,169,110,.35))}
+.sbn .sn{font-family:var(--fd);font-size:28px;font-weight:700;color:var(--off);letter-spacing:6px}
+.sbn .sr{font-size:8px;color:var(--gold);letter-spacing:5px;display:block;margin-top:2px}
+.sbn .st{font-size:7px;color:var(--dim);letter-spacing:2px;display:block;margin-top:3px}
+.sched-hdr-rule{height:1px;background:linear-gradient(to right,var(--gold-dim),transparent);margin:0 0 12px}
+.proj-info{display:flex;gap:36px;flex-wrap:wrap}
+.pi{display:flex;flex-direction:column;gap:2px}
+.pi .pl{font-size:7px;color:var(--gold-mid);letter-spacing:2px;text-transform:uppercase}
+.pi .pv{font-size:11px;color:var(--mid);font-weight:500}
+
+/* GANTT */
+.gantt-wrap{padding:16px 32px 0;overflow-x:auto}
+.g-col-hdr{display:grid;border-bottom:1.5px solid var(--gold);background:var(--bg3);position:sticky;top:44px;z-index:10}
+.g-ch-task{padding:6px 0 6px 12px;font-size:7px;font-weight:700;color:var(--gold-lt);letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center}
+.g-ch-day{text-align:center;padding:4px 0;border-left:1px solid var(--dim2)}
+.g-ch-day-n{font-size:7.5px;font-weight:700;color:var(--gold-lt);display:block;line-height:1.3}
+.g-ch-day-d{font-size:6px;color:var(--dim);display:block;line-height:1.3}
+.g-phase{margin-bottom:3px}
+.g-phase-hdr{display:grid;background:var(--bg4);height:20px;border-left:3px solid var(--pc);border-bottom:1px solid rgba(0,0,0,.5)}
+.g-ph-inner{display:flex;align-items:center;gap:8px;padding:0 12px;overflow:hidden}
+.g-ph-badge{background:var(--pc);color:#0a0908;font-size:7px;font-weight:700;letter-spacing:.5px;padding:2px 9px;white-space:nowrap;flex-shrink:0}
+.g-ph-label{font-size:9px;font-weight:700;color:var(--off);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-ph-emp{border-left:1px solid var(--dim2);background:rgba(0,0,0,.15)}
+.g-task{display:grid;border-bottom:.4px solid var(--dim2);transition:background .1s;cursor:default}
+.g-task:hover{background:var(--bg5) !important}
+.g-tname{display:flex;align-items:center;padding:0 6px 0 12px;border-left:2px solid var(--ta,var(--dim2));overflow:hidden}
+.g-tname span{font-size:10px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1}
+.g-tname span.tc{color:var(--bright);font-weight:500}
+.g-tname span.td{color:var(--dim);font-style:italic;font-size:9px}
+.g-dcell{border-left:1px solid var(--dim2);position:relative}
+.g-bar{position:absolute;top:2px;bottom:2px;left:2px;border-radius:1px;animation:barIn .4s ease both;transform-origin:left}
+.g-bar.bw{box-shadow:inset 0 -2px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.15)}
+.g-bar.bd{background:repeating-linear-gradient(45deg,var(--dry) 0,var(--dry) 3px,#141210 3px,#141210 7px);border:.5px solid #2a2820}
+.g-cdot{position:absolute;left:7px;top:50%;transform:translateY(-50%);width:4px;height:4px;border-radius:50%;background:#fff}
+
+.legend-row{display:flex;gap:20px;flex-wrap:wrap;padding:10px 0;border-top:.5px solid var(--dim2);margin:0 32px 4px}
+.leg{display:flex;align-items:center;gap:7px;font-size:8px;color:var(--dim)}
+.leg-sw{width:14px;height:10px;border-radius:1px;flex-shrink:0}
+
+.sched-sum{padding:20px 32px;border-top:1.5px solid var(--gold);margin-top:8px}
+.sum-ttl{font-family:var(--fd);font-size:22px;font-weight:600;color:var(--gold-lt);letter-spacing:1px;margin-bottom:14px}
+.met-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-bottom:20px}
+.met-card{background:var(--bg3);padding:12px 15px;border-left:3px solid var(--mc,var(--gold))}
+.met-l{font-size:7px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px}
+.met-v{font-family:var(--fd);font-size:20px;font-weight:600;color:var(--gold-lt)}
+
+.disclaimer{margin:8px 32px 20px;background:var(--bg3);border:1px solid var(--dim2);border-left:3px solid var(--gold-dim);padding:16px 20px;font-size:8.5px;color:var(--dim);line-height:1.9}
+.disclaimer strong{display:block;font-size:9px;color:var(--gold-mid);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.disclaimer p{margin-bottom:8px}
+
+.sched-foot{background:var(--bg3);border-top:.5px solid var(--gold-dark);padding:8px 32px;text-align:center;font-size:7.5px;color:var(--dim);letter-spacing:1px}
+
+/* ── ANIMATIONS ───────────────────────────── */
+@keyframes panelIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+@keyframes formIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes ringPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.04)}}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes dotB{0%,80%,100%{transform:scale(0);opacity:.2}40%{transform:scale(1);opacity:1}}
+@keyframes barIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+@media print{
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .out-nav{display:none !important}
+  @page{size:landscape;margin:6mm}
+  .g-col-hdr{position:static}
+  .g-phase{page-break-inside:avoid}
+}
+@media(max-width:860px){
+  #screen-input.active{flex-direction:column}
+  .landing-left{width:100%;min-height:auto;padding:40px 32px 36px;
+    flex-direction:row;gap:24px;justify-content:flex-start}
+  .landing-left::after{display:none}
+  .brand-block{flex-direction:row;align-items:center;gap:20px}
+  .logo-ring{width:80px;height:80px;margin-bottom:0}
+  .logo-ring img{width:64px;height:64px}
+  .brand-name{font-size:36px}
+  .brand-pills,.divider{display:none}
+  .landing-right{padding:32px 28px}
+  .fg{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- INPUT -->
+<div id="screen-input" class="screen active">
+  <div class="landing-left">
+    <div class="brand-block">
+      <div class="logo-ring">
+        <img src="https://i.ibb.co/LXMxPRYx/Chat-GPT-Image-2-may-2026-12-02-45-a-m.png"
+             alt="Formo Renovation" onerror="this.style.display='none'">
+      </div>
+      <div class="brand-name">FORMO</div>
+      <div class="brand-renov">Renovation</div>
+      <div class="brand-tag">Built on Quality<br>Driven by Integrity</div>
+      <div class="divider"></div>
+      <div class="brand-pills">
+        <span class="brand-pill">AI Powered</span>
+        <span class="brand-pill">No Sundays</span>
+        <span class="brand-pill">Print Ready</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="landing-right">
+    <div class="form-eyebrow">Formo Renovation LLC</div>
+    <div class="form-heading">Project Schedule<br>Generator</div>
+    <div class="form-sub">Enter project details and paste the scope of work to generate a professional schedule</div>
+
+    <div class="fg">
+      <div class="field">
+        <label>Client Name</label>
+        <input type="text" id="in-client" placeholder="e.g. Mike Crockett">
+      </div>
+      <div class="field">
+        <label>Project Address</label>
+        <input type="text" id="in-address" placeholder="e.g. 2142 Maytown Cir, TN">
+      </div>
+      <div class="field">
+        <label>Start Date</label>
+        <input type="date" id="in-start">
+      </div>
+      <div class="field">
+        <label>Estimated Duration</label>
+        <input type="text" id="in-dur" placeholder="e.g. 2 weeks / 12 working days">
+      </div>
+    </div>
+
+    <div class="fsep"></div>
+
+    <div class="fg full">
+      <div class="field">
+        <label>Scope of Work</label>
+        <textarea id="in-scope" placeholder="Paste the full scope of work here...&#10;&#10;Example:&#10;Phase 1 – Painting: Interior walls, ceilings, trim&#10;Phase 2 – Carpentry: Built-in shelving, ceiling beams&#10;Phase 3 – Drywall: Repair around bathtub, ceiling seams&#10;Phase 4 – Wallpaper: Powder room above wainscoting&#10;Phase 5 – Fixtures: Light fixtures, chandelier, mirrors"></textarea>
+      </div>
+    </div>
+
+    <div id="ferr" class="ferr"></div>
+    <button class="btn-gen" id="btn-gen" onclick="go()">Generate Project Schedule</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="screen-loading" class="screen">
+  <div class="load-img"><img src="https://i.ibb.co/LXMxPRYx/Chat-GPT-Image-2-may-2026-12-02-45-a-m.png" alt=""></div>
+  <div class="load-wm">FORMO</div>
+  <div class="load-sub">Building your schedule…</div>
+  <div class="load-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- OUTPUT -->
+<div id="screen-output" class="screen">
+  <div class="out-nav">
+    <button class="btn-back" onclick="show('screen-input')">← New Schedule</button>
+    <div class="nav-proj" id="nav-title"></div>
+    <button class="btn-pdf" onclick="window.print()">⬇ Print / Save PDF</button>
+  </div>
+  <div id="sched-out"></div>
+</div>
+
+<script>
+const LOGO='https://i.ibb.co/LXMxPRYx/Chat-GPT-Image-2-may-2026-12-02-45-a-m.png';
+const COLORS=['#C9A96E','#B87818','#CC9E40','#3A9228','#C9A96E','#C89840','#4A9A30','#8A7030','#5A9A28','#D0A040'];
+const DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function showErr(m){const e=document.getElementById('ferr');e.textContent=m;e.style.display='block'}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('in-start').value=new Date().toISOString().split('T')[0];
+});
+
+function nw(d){const r=new Date(d);while(r.getDay()===0)r.setDate(r.getDate()+1);return r}
+function aw(d,n){const r=new Date(d);let a=0;while(a<n){r.setDate(r.getDate()+1);if(r.getDay()!==0)a++}return r}
+function buildCal(start,n){
+  const cal={};let cur=nw(new Date(start));
+  for(let d=1;d<=n;d++){
+    cal[d]={name:DNAMES[cur.getDay()].toUpperCase(),date:`${MNAMES[cur.getMonth()]} ${cur.getDate()}`};
+    cur.setDate(cur.getDate()+1);while(cur.getDay()===0)cur.setDate(cur.getDate()+1);
+  }return cal;
+}
+function dr(start,n){
+  const s=nw(new Date(start)),e=aw(s,n-1);
+  return `${DNAMES[s.getDay()]} ${s.getDate()} ${MNAMES[s.getMonth()]} — ${DNAMES[e.getDay()]} ${e.getDate()} ${MNAMES[e.getMonth()]} ${e.getFullYear()}`;
+}
+
+async function go(){
+  const client=document.getElementById('in-client').value.trim();
+  const address=document.getElementById('in-address').value.trim();
+  const start=document.getElementById('in-start').value;
+  const dur=document.getElementById('in-dur').value.trim();
+  const scope=document.getElementById('in-scope').value.trim();
+  document.getElementById('ferr').style.display='none';
+  if(!scope)return showErr('Please enter the scope of work.');
+  if(!start)return showErr('Please select a start date.');
+  document.getElementById('btn-gen').disabled=true;
+  show('screen-loading');
+  try{
+    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope,clientName:client,address,startDate:start,duration:dur})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Server error');
+    document.getElementById('nav-title').textContent=client?`${client}${address?' — '+address:''}`:address||'Project Schedule';
+    renderSchedule(data,client,address,start);
+    show('screen-output');window.scrollTo(0,0);
+  }catch(e){show('screen-input');showErr(e.message);}
+  finally{document.getElementById('btn-gen').disabled=false;}
+}
+
+function renderSchedule(data,client,address,start){
+  const N=Math.max(data.totalDays||10,1);
+  const cal=buildCal(start,N);
+  const dateRng=dr(start,N);
+  const TW=210,DW=44;
+  const colTpl=`${TW}px repeat(${N},${DW}px)`;
+  const totalW=TW+N*DW;
+  const now=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const startFmt=new Date(start).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+
+  let phHtml='';
+  data.phases.forEach((ph,pi)=>{
+    const col=COLORS[pi%COLORS.length];
+    const emps=Array.from({length:N},()=>`<div class="g-ph-emp"></div>`).join('');
+    phHtml+=`<div class="g-phase">
+      <div class="g-phase-hdr" style="grid-template-columns:${colTpl};--pc:${col}">
+        <div class="g-ph-inner"><span class="g-ph-badge">${esc(ph.code)}</span><span class="g-ph-label">${esc(ph.label)}</span></div>${emps}
+      </div>`;
+    ph.tasks.forEach(task=>{
+      const dry=task.type==='dry',crit=task.critical&&!dry;
+      const rh=dry?12:16;
+      const rbg=dry?'var(--dry)':'var(--bg2)';
+      const tacc=dry?'transparent':crit?col:'var(--dim2)';
+      const tcls=dry?'td':crit?'tc':'';
+      const d0=Math.min(...task.days),d1=Math.max(...task.days);
+      const nm=(task.name||'').length>58?task.name.slice(0,57)+'…':task.name;
+      let cells='';
+      for(let i=1;i<=N;i++){
+        if(i===d0){
+          const sw=(d1-d0+1)*DW-4;
+          cells+=`<div class="g-dcell" style="height:${rh}px;overflow:visible;z-index:2">
+            <div class="g-bar ${dry?'bd':'bw'}" style="${dry?'':('background:'+col)};width:${sw}px">
+              ${crit?'<div class="g-cdot"></div>':''}
+            </div></div>`;
+        }else{cells+=`<div class="g-dcell" style="height:${rh}px"></div>`;}
+      }
+      phHtml+=`<div class="g-task" style="grid-template-columns:${colTpl};height:${rh}px;background:${rbg};--ta:${tacc}">
+        <div class="g-tname" title="${esc(task.name)}"><span class="${tcls}">${esc(nm)}</span></div>${cells}
+      </div>`;
+    });
+    phHtml+=`</div>`;
+  });
+
+  const totalTasks=data.phases.reduce((a,p)=>a+p.tasks.filter(t=>t.type!=='dry').length,0);
+  const metHtml=[
+    ['Total Duration',`${N} Working Days`,'var(--gold)'],
+    ['Total Phases',`${data.phases.length}`,'#CC9E40'],
+    ['Work Processes',`${totalTasks}`,'#3A9228'],
+    ['Project Start',startFmt,'#C9A96E'],
+  ].map(([l,v,c])=>`<div class="met-card" style="--mc:${c}"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`).join('');
+
+  const infoItems=[
+    client?['Client',client]:null,
+    address?['Address',address]:null,
+    ['Schedule',dateRng],
+    ['No work on','Sundays & Holidays'],
+  ].filter(Boolean).map(([l,v])=>`<div class="pi"><span class="pl">${l}</span><span class="pv">${esc(v)}</span></div>`).join('');
+
+  const notesHtml=data.notes?`<div style="font-size:9px;color:var(--dim);padding:10px 0;line-height:1.9;border-top:.5px solid var(--dim2);margin-top:10px">
+    <span style="color:var(--gold-mid);font-size:8px;letter-spacing:2px;text-transform:uppercase;font-weight:600">Schedule Notes</span><br>${esc(data.notes)}</div>`:'';
+
+  document.getElementById('sched-out').innerHTML=`<div class="sched-doc">
+    <div class="sched-hdr">
+      <div class="sched-hdr-top">
+        <div class="sched-brand">
+          <img src="${LOGO}" alt="Formo" class="sched-logo" onerror="this.style.display='none'">
+          <div class="sbn">
+            <span class="sn">FORMO</span>
+            <span class="sr">R &nbsp; E &nbsp; N &nbsp; O &nbsp; V &nbsp; A &nbsp; T &nbsp; I &nbsp; O &nbsp; N</span>
+            <span class="st">BUILT ON QUALITY, DRIVEN BY INTEGRITY</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:700;color:var(--gold-lt);margin-bottom:5px">Project Work Schedule</div>
+          <div style="font-size:7.5px;color:var(--dim);line-height:1.8">Generated ${now}<br>FORMO RENOVATION LLC &nbsp;·&nbsp; 615-608-1220</div>
+        </div>
+      </div>
+      <div class="sched-hdr-rule"></div>
+      <div class="proj-info">${infoItems}</div>
+    </div>
+    <div class="gantt-wrap"><div style="min-width:${totalW}px">
+      <div class="g-col-hdr" style="grid-template-columns:${colTpl}">
+        <div class="g-ch-task">Task / Process</div>
+        ${Object.entries(cal).map(([d,v])=>`<div class="g-ch-day"><span class="g-ch-day-n">${v.name}</span><span class="g-ch-day-d">${v.date}</span></div>`).join('')}
+      </div>
+      ${phHtml}
+    </div></div>
+    <div class="legend-row">
+      <div class="leg"><div class="leg-sw" style="background:var(--gold)"></div>Active Work</div>
+      <div class="leg"><div class="leg-sw" style="background:repeating-linear-gradient(45deg,var(--dry) 0,var(--dry) 3px,#141210 3px,#141210 6px);border:.5px solid #333"></div>Drying / Curing — do not disturb</div>
+      <div class="leg"><div class="leg-sw" style="background:var(--gold);position:relative"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:4px;height:4px;border-radius:50%;background:#fff"></div></div>Critical / Blocking Task</div>
+    </div>
+    <div class="sched-sum">
+      <div class="sum-ttl">Project Summary</div>
+      <div class="met-grid">${metHtml}</div>${notesHtml}
+    </div>
+    <div class="disclaimer">
+      <strong>Important Disclaimers &amp; Conditions</strong>
+      <p>This schedule is a planning estimate prepared by Formo Renovation LLC based on the approved scope of work and current project conditions. Actual timelines may vary due to material lead times, weather conditions, unforeseen structural or concealed conditions, client-requested changes, permit requirements, or third-party inspections.</p>
+      <p>Any modifications to the scope of work require a written Change Order and may affect the project timeline. Drying and curing periods are minimum estimates under normal conditions; humidity, temperature, and ventilation may extend these periods.</p>
+      <p>Work is performed Monday through Saturday. Sundays and recognized holidays are not working days unless agreed in writing. This document is for planning purposes only and does not constitute a contractual guarantee of completion dates.</p>
+      <p style="color:var(--gold-dim)">Formo Renovation LLC &nbsp;·&nbsp; Insured &amp; W9 Ready &nbsp;·&nbsp; dan@formorenovation.com &nbsp;·&nbsp; 615-608-1220</p>
+    </div>
+    <div class="sched-foot">Formo Renovation LLC &nbsp;·&nbsp; Insured &amp; W9 Ready &nbsp;·&nbsp; dan@formorenovation.com &nbsp;·&nbsp; 615-608-1220 &nbsp;·&nbsp; Generated ${now}</div>
+  </div>`;
+}
+</script>
+</body>
+</html>
